@@ -7,6 +7,7 @@
 
         /* ------------------------------------------------------------ */
 
+
     function boundingBox(primitive) {
         var X = {i: 0, f: 0};
         var Y = {i: 0, f: 0};
@@ -68,14 +69,34 @@
         }
     }
 
+    function transform(primitive){
+        var {vertices, xform, color, shape} = primitive
+
+        var matrix = nj.array(xform)
+        var vectMatrix = nj.array(vertices.map(v => [...v, 1]));
+
+        var new_vertices = nj.dot(matrix, vectMatrix).tolist();
+        
+        var transf_primitive = {
+            shape,
+            vertices: new_vertices.map(v => [Math.floor(v[0]), Math.floor(v[1])]),
+            color,
+            xform
+        }
+
+        return transf_primitive;
+    }
+
     function pushScene(preprop_scene, primitive) {
-        var bBox = boundingBox(primitive);        
-        preprop_scene.push({primitive, boundingBox: bBox});
+        var prim = primitive.xform ? transform(primitive) : primitive;
+        var bBox = boundingBox(prim);    
+
+        preprop_scene.push({primitive: prim, boundingBox: bBox});
         return preprop_scene;
     }
 
     function polygonToTriangles(preprop_scene, primitive) {
-        const { vertices, color } = primitive;
+        const { vertices, color, xform } = primitive;
 
         for (var i = 1; i < vertices.length - 1; i++){
             var triangulo = {
@@ -85,7 +106,8 @@
                     vertices[i],
                     vertices[i+1]
                 ],
-                color: color
+                color,
+                xform
             }
 
             preprop_scene = pushScene(preprop_scene, triangulo)  
@@ -105,14 +127,14 @@
         }
 
         const list = getRadians(n);
-        const { radius: r, center, color } = primitive;
+        const { radius: r, center, color, xform } = primitive;
         const [centerX, centerY] = center;
         // Criação de pontos através da equação paramétrica do círculo
         const P = list.map((degree) => {
             return [Math.floor(r * Math.sin(degree) + centerX), Math.floor(r * Math.cos(degree) + centerY)];
         })
 
-        return polygonToTriangles(preprop_scene, {vertices: P, color});
+        return polygonToTriangles(preprop_scene, {vertices: P, color, xform});
     }        
     
     function Screen( width, height, scene ) {
@@ -141,7 +163,7 @@
                     }
 
                     if (primitive.shape == 'circle'){
-                        preprop_scene = circleToTriangles(preprop_scene, primitive, 29)
+                        preprop_scene = circleToTriangles(preprop_scene, primitive, 30)
                     }
                 }
                 
