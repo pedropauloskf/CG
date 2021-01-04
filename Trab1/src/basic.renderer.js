@@ -58,17 +58,20 @@
             var L0 = (d0[0] * n0[0]) + (d0[1] * n0[1]);
             var L1 = (d1[0] * n1[0]) + (d1[1] * n1[1]);
             var L2 = (d2[0] * n2[0]) + (d2[1] * n2[1]);
-
-            if (L0>0 && L1>0 && L2>0){
-                console.log("teste ok");            
+            
+            if (L0>0 && L1>0 && L2>0 || L0<0 && L1<0 && L2<0){
                 return true;
-            } else {
-                console.log("teste nok"); 
             }
         }
         else {      
             return false
         }
+    }
+
+    function pushScene(preprop_scene, primitive) {
+        var bBox = boundingBox(primitive);        
+        preprop_scene.push({primitive, boundingBox: bBox});
+        return preprop_scene;
     }
 
     function polygonToTriangles(preprop_scene, primitive) {
@@ -85,20 +88,17 @@
                 color: color
             }
 
-            var bBox = boundingBox(triangulo);
-            //preprop_scene.push( bBox );
-            
-            preprop_scene.push( triangulo );  
+            preprop_scene = pushScene(preprop_scene, triangulo)  
         }
-        console.log(preprop_scene);
+        
         return preprop_scene;
     }
 
     function circleToTriangles (preprop_scene, primitive, n) {
         function getRadians(n){ //Criação de lista de variação da angulação do círculo
             var radList = [];
-            const degree = (2 * Math.PI)/n;
-            for (var i = 0; i < n; i++){
+            const degree = (2 * Math.PI)/(n+2);
+            for (var i = 0; i < n+2; i++){
                 radList.push(i*degree);
             }
             return radList;
@@ -106,8 +106,7 @@
 
         const list = getRadians(n);
         const { radius: r, center, color } = primitive;
-        const [centerX, centerY] = center
-
+        const [centerX, centerY] = center;
         // Criação de pontos através da equação paramétrica do círculo
         const P = list.map((degree) => {
             return [Math.floor(r * Math.sin(degree) + centerX), Math.floor(r * Math.cos(degree) + centerY)];
@@ -134,9 +133,7 @@
                 for( var primitive of scene ) {  
 
                     if (primitive.shape == 'triangle'){
-                        var bBox = boundingBox(primitive);
-                        //preprop_scene.push( bBox );
-                        preprop_scene.push( primitive );
+                        preprop_scene = pushScene(preprop_scene, primitive);
                     }
 
                     if (primitive.shape == 'polygon'){
@@ -144,7 +141,7 @@
                     }
 
                     if (primitive.shape == 'circle'){
-                        preprop_scene = circleToTriangles(preprop_scene, primitive, 4)
+                        preprop_scene = circleToTriangles(preprop_scene, primitive, 29)
                     }
                 }
                 
@@ -159,31 +156,16 @@
                 var color;
          
                 // In this loop, the image attribute must be updated after the rasterization procedure.
-                for( var primitive of this.scene ) {
+                for( var group of this.scene ) {
+                    const {primitive, boundingBox} = group;
 
-                    /**
-                    for (var i = 0; i < this.scene.length; i += 2){
-                        var box = this.scene[i];
-                        var primitive = this.scene[i+1];
-                        console.log(primitive);
-                        for (var j = box.X.i; j <= box.X.f; j++){
-                            var x = j + 0.5;
-    
-                            for (var k = box.Y.i; k <= box.Y.f; k++){
-                                var y = k + 0.5;
-    
-                                if ( inside( x, y, primitive ) ) {                                
-                                    color = primitive.color;
-                                    this.set_pixel( j, this.height - (k + 1), color );
-                                }
-                            }
-                        }
-                    }**/
                     // Loop through all pixels
-                    for (var i = 0; i < this.width; i++) {
+                    for (var i = boundingBox.X.i; i < boundingBox.X.f; i++) {
                         var x = i + 0.5;
-                        for( var j = 0; j < this.height; j++) {
+
+                        for( var j = boundingBox.Y.i; j < boundingBox.Y.f; j++) {
                             var y = j + 0.5;
+
                             if ( inside( x, y, primitive ) ) {
                                 color = nj.array(primitive.color);
                                 this.set_pixel( i, this.height - (j + 1), color );
