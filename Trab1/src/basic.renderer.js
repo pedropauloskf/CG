@@ -6,6 +6,13 @@
 
 
         /* ------------------------------------------------------------ */
+	/*
+	Primeira Tarefa Prática - Computação Gráfica I 
+	Alunos: Pedro Paulo Soares  Dre: 114153450
+		Paula Macedo 	Dre: 113049909
+	Professor: João Vitor de Oliveira Silva
+	
+	*/
 
 
     function boundingBox(primitive) {
@@ -69,6 +76,7 @@
         }
     }
 
+    //Aplica a transformação afim		     
     function transform(primitive){
         var {vertices, xform, color, shape} = primitive
 
